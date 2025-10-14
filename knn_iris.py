@@ -148,19 +148,71 @@ print("\n📊 Avaliando o desempenho do modelo...")
 acc = accuracy(y_test, y_pred)
 
 # ============================================================================
-# ETAPA 4: EXIBIR OS RESULTADOS
+# ETAPA 4: EXIBIR OS RESULTADOS COMPLETOS
 # ============================================================================
 
-print("\n" + "="*50)
-print("🎯 RESULTADOS DA CLASSIFICAÇÃO KNN")
-print("="*50)
-print(f"Número de vizinhos (k): {k}")
-print(f"Acurácia do modelo: {acc:.2f} ({acc*100:.2f}%)")
+# Calcular estatísticas detalhadas
+total_previsoes = len(y_test)
+total_acertos = int(acc * total_previsoes)
+total_erros = total_previsoes - total_acertos
+
+print("\n" + "="*60)
+print("🎯 RESULTADOS FINAIS DA CLASSIFICAÇÃO KNN")
+print("="*60)
+
+# Informações do modelo
+print(f"\n🔧 CONFIGURAÇÃO DO MODELO:")
+print(f"   Algoritmo: K-Nearest Neighbors (KNN)")
+print(f"   Número de vizinhos (k): {k}")
+print(f"   Total de instâncias de teste: {total_previsoes}")
+
+# Métricas de desempenho
+print(f"\n📊 DESEMPENHO DO MODELO:")
+print(f"   ✅ Acertos: {total_acertos}")
+print(f"   ❌ Erros: {total_erros}")
+print(f"   🎯 Acurácia: {acc:.4f} ({acc*100:.2f}%)")
+
+# Interpretação da acurácia
+if acc >= 0.95:
+    interpretacao = "EXCELENTE! 🌟🌟🌟"
+elif acc >= 0.90:
+    interpretacao = "MUITO BOM! ✅✅"
+elif acc >= 0.80:
+    interpretacao = "BOM! 👍"
+else:
+    interpretacao = "PRECISA MELHORAR ⚠️"
+
+print(f"   📈 Avaliação: {interpretacao}")
+
+print("-"*60)
+
+# Exemplos de previsões (melhorados)
+print(f"\n📝 EXEMPLOS DE PREVISÕES (primeiros 15 casos):")
+print(f"{'#':<3} | {'Real':<15} | {'Previsto':<15} | {'Status':<10}")
+print("-"*55)
+
+for i, (real, pred) in enumerate(zip(y_test[:15], y_pred[:15]), 1):
+    status = "✅ Acerto" if real == pred else "❌ Erro" 
+    print(f"{i:2d}  | {real:<15} | {pred:<15} | {status}")
+
+# Resumo por classe (análise detalhada)
+print(f"\n📊 ANÁLISE POR CLASSE:")
+print(f"{'Classe':<15} | {'Total':<6} | {'Acertos':<8} | {'Acurácia':<10}")
 print("-"*50)
 
-print(f"\n📝 Exemplos de previsões:")
-print(f"{'Real':<15} | {'Previsto':<15} | Status")
-print("-"*45)
-for real, pred in zip(y_test[:10], y_pred[:10]):
-    status = "✅ Correto" if real == pred else "❌ Erro" 
-    print(f"{real:<15} | {pred:<15} | {status}")
+classes_unicas = np.unique(y_test)
+for classe in classes_unicas:
+    # Máscara para filtrar apenas instâncias desta classe
+    mask = y_test == classe
+    y_real_classe = y_test[mask]
+    y_pred_classe = np.array(y_pred)[mask]
+    
+    total_classe = len(y_real_classe)
+    acertos_classe = np.sum(y_real_classe == y_pred_classe)
+    acuracia_classe = acertos_classe / total_classe
+    
+    print(f"{classe:<15} | {total_classe:>5} | {acertos_classe:>7} | {acuracia_classe*100:>7.2f}%")
+
+print("\n" + "="*60)
+print("✅ ANÁLISE COMPLETA! O modelo KNN foi avaliado com sucesso.")
+print("="*60)
