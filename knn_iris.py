@@ -1,3 +1,34 @@
+"""
+===============================================================================
+                    ALGORITMO K-NEAREST NEIGHBORS (KNN)
+                    CLASSIFICAÇÃO DO DATASET IRIS
+===============================================================================
+
+DESCRIÇÃO DA TAREFA:
+-------------------
+Este script implementa o algoritmo KNN para classificar flores do dataset Iris.
+O dataset contém 150 instâncias de 3 tipos de flores (50 de cada tipo):
+- Iris-setosa
+- Iris-versicolor 
+- Iris-virginica
+
+Cada flor é descrita por 4 atributos (em centímetros):
+- sepal_length (comprimento da sépala)
+- sepal_width (largura da sépala)
+- petal_length (comprimento da pétala)
+- petal_width (largura da pétala)
+
+OBJETIVO:
+---------
+Treinar um modelo KNN que consiga prever o tipo de uma flor baseado
+nas medidas de suas sépalas e pétalas.
+
+MÉTRICA DE AVALIAÇÃO:
+--------------------
+Acurácia: porcentagem de previsões corretas em relação ao total de previsões.
+
+"""
+
 import pandas as pd
 import numpy as np
 from collections import Counter
