@@ -32,14 +32,18 @@ class ModelEvaluator:
     validação cruzada e comparação entre modelos.
     """
     
-    def __init__(self, class_names: List[str] = None):
+    def __init__(self, class_names: List[str] = None, cv_folds: int = 5, random_state: int = 42):
         """
         Inicializa o avaliador.
         
         Args:
             class_names: Nomes das classes para relatórios
+            cv_folds: Número de folds para validação cruzada
+            random_state: Seed para reprodutibilidade
         """
         self.class_names = class_names
+        self.cv_folds = cv_folds
+        self.random_state = random_state
         self.results = {}
     
     def calculate_metrics(self, y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, float]:
@@ -76,7 +80,7 @@ class ModelEvaluator:
         return confusion_matrix(y_true, y_pred)
     
     def cross_validate_model(self, model, X: np.ndarray, y: np.ndarray, 
-                           cv: int = 5, random_state: int = 42) -> Dict[str, Any]:
+                           cv: int = None, random_state: int = None) -> Dict[str, Any]:
         """
         Realiza validação cruzada do modelo.
         
@@ -84,12 +88,18 @@ class ModelEvaluator:
             model: Modelo a ser avaliado
             X: Features
             y: Labels  
-            cv: Número de folds
-            random_state: Seed para reprodutibilidade
+            cv: Número de folds (usa self.cv_folds se None)
+            random_state: Seed para reprodutibilidade (usa self.random_state se None)
             
         Returns:
             Dicionário com resultados da validação cruzada
         """
+        # Usa parâmetros da classe se não fornecidos
+        if cv is None:
+            cv = self.cv_folds
+        if random_state is None:
+            random_state = self.random_state
+            
         # Configurar validação cruzada estratificada
         skf = StratifiedKFold(n_splits=cv, shuffle=True, random_state=random_state)
         
@@ -98,35 +108,27 @@ class ModelEvaluator:
         
         # Acurácia
         accuracy_scores = cross_val_score(model, X, y, cv=skf, scoring='accuracy')
-        cv_results['accuracy'] = {
-            'scores': accuracy_scores,
-            'mean': accuracy_scores.mean(),
-            'std': accuracy_scores.std()
-        }
+        cv_results['accuracy_scores'] = accuracy_scores
+        cv_results['accuracy_mean'] = accuracy_scores.mean()
+        cv_results['accuracy_std'] = accuracy_scores.std()
         
         # Precisão
         precision_scores = cross_val_score(model, X, y, cv=skf, scoring='precision_weighted')
-        cv_results['precision'] = {
-            'scores': precision_scores,
-            'mean': precision_scores.mean(),
-            'std': precision_scores.std()
-        }
+        cv_results['precision_scores'] = precision_scores
+        cv_results['precision_mean'] = precision_scores.mean()
+        cv_results['precision_std'] = precision_scores.std()
         
         # Revocação
         recall_scores = cross_val_score(model, X, y, cv=skf, scoring='recall_weighted')
-        cv_results['recall'] = {
-            'scores': recall_scores,
-            'mean': recall_scores.mean(),
-            'std': recall_scores.std()
-        }
+        cv_results['recall_scores'] = recall_scores
+        cv_results['recall_mean'] = recall_scores.mean()
+        cv_results['recall_std'] = recall_scores.std()
         
         # F1-Score
         f1_scores = cross_val_score(model, X, y, cv=skf, scoring='f1_weighted')
-        cv_results['f1_score'] = {
-            'scores': f1_scores,
-            'mean': f1_scores.mean(),
-            'std': f1_scores.std()
-        }
+        cv_results['f1_scores'] = f1_scores
+        cv_results['f1_mean'] = f1_scores.mean()
+        cv_results['f1_std'] = f1_scores.std()
         
         return cv_results
     
@@ -169,7 +171,9 @@ class ModelEvaluator:
             'model_name': model_name,
             'cross_validation': cv_results,
             'confusion_matrix': conf_matrix,
-            'classification_report': report
+            'classification_report': report,
+            'y_true': y,
+            'y_pred': y_pred
         }
         
         # Armazena para comparação posterior
@@ -205,14 +209,14 @@ class ModelEvaluator:
             cv_results = results['cross_validation']
             row = {
                 'Model': name,
-                'Accuracy_Mean': cv_results['accuracy']['mean'],
-                'Accuracy_Std': cv_results['accuracy']['std'],
-                'Precision_Mean': cv_results['precision']['mean'],
-                'Precision_Std': cv_results['precision']['std'],
-                'Recall_Mean': cv_results['recall']['mean'],
-                'Recall_Std': cv_results['recall']['std'],
-                'F1_Score_Mean': cv_results['f1_score']['mean'],
-                'F1_Score_Std': cv_results['f1_score']['std']
+                'Accuracy_Mean': cv_results['accuracy_mean'],
+                'Accuracy_Std': cv_results['accuracy_std'],
+                'Precision_Mean': cv_results['precision_mean'],
+                'Precision_Std': cv_results['precision_std'],
+                'Recall_Mean': cv_results['recall_mean'],
+                'Recall_Std': cv_results['recall_std'],
+                'F1_Score_Mean': cv_results['f1_mean'],
+                'F1_Score_Std': cv_results['f1_std']
             }
             
             comparison_data.append(row)

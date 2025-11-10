@@ -92,7 +92,7 @@ def main():
     print("\n🔬 ETAPA 3: Avaliação com Validação Cruzada")
     print("-" * 50)
     
-    evaluator = ModelEvaluator(cv_folds=5, random_state=42)
+    evaluator = ModelEvaluator(class_names=data_loader.class_names, cv_folds=5, random_state=42)
     all_results = {}
     
     for name, model in models.items():
@@ -104,7 +104,7 @@ def main():
             
             # Avaliação completa
             complete_results = evaluator.evaluate_model_complete(
-                model, X, y, data_loader.class_names
+                model, X, y, name
             )
             
             all_results[name] = {
@@ -126,7 +126,7 @@ def main():
     if len(all_results) >= 2:
         try:
             # Compara modelos
-            comparison = evaluator.compare_models(all_results)
+            comparison = evaluator.compare_models(models, X, y)
             
             print("✅ Comparação realizada com sucesso")
             

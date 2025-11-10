@@ -77,6 +77,9 @@ class IrisDataLoader:
             # Armazena nomes únicos das classes
             self.class_names = sorted(self.df['class'].unique())
             
+            # Define atributo data para compatibilidade
+            self.data = self.df
+            
             print(f"✅ Dataset carregado: {len(self.df)} instâncias")
             print(f"✅ Classes encontradas: {self.class_names}")
             
