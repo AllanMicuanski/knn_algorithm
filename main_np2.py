@@ -29,8 +29,7 @@ sys.path.append(str(Path(__file__).parent / 'src'))
 from src.data.data_loader import IrisDataLoader
 from src.models.knn import KNNClassifier
 from src.models.svm import SVMClassifier
-from src.evaluation.metrics import ModelEvaluator
-from src.evaluation.confusion_matrix import ConfusionMatrixAnalyzer, create_confusion_matrix_report
+from src.evaluation.metrics import ModelEvaluator, ConfusionMatrixAnalyzer
 
 
 def main():
@@ -47,76 +46,42 @@ def main():
     print("-" * 50)
     
     try:
-        # Carrega dados
         data_loader = IrisDataLoader()
-        data_loader.load_data()
-        
-        print(f"✅ Dataset carregado com sucesso:")
-        print(f"   - Total de amostras: {len(data_loader.data)}")
-        print(f"   - Features: {len(data_loader.feature_names)}")
-        print(f"   - Classes: {len(data_loader.class_names)}")
-        print(f"   - Classes: {', '.join(data_loader.class_names)}")
-        
-        # Preprocessa dados
         X, y = data_loader.preprocess_data()
-        print(f"✅ Dados preprocessados (normalizados)")
-        
-        # Informações do dataset
-        print(f"\n📈 Informações do Dataset:")
-        unique, counts = np.unique(y, return_counts=True)
-        for i, (cls, count) in enumerate(zip(data_loader.class_names, counts)):
-            print(f"   - {cls}: {count} amostras")
-        
     except Exception as e:
-        print(f"❌ Erro no carregamento dos dados: {e}")
+        print(f"❌ Erro: {e}")
         return
     
     # 2. CONFIGURAÇÃO DOS MODELOS
     print("\n🤖 ETAPA 2: Configuração dos Modelos")
     print("-" * 50)
     
-    # Inicializa modelos
     models = {
         'KNN': KNNClassifier(n_neighbors=3),
         'SVM': SVMClassifier(kernel='rbf', C=1.0, random_state=42)
     }
-    
-    print("✅ Modelos configurados:")
-    for name, model in models.items():
-        if name == 'KNN':
-            print(f"   - {name}: k={model.n_neighbors} vizinhos, distância euclidiana")
-        else:
-            print(f"   - {name}: kernel RBF, C=1.0")
+    print("✅ KNN (k=3) e SVM (RBF, C=1.0) configurados")
     
     # 3. AVALIAÇÃO COM VALIDAÇÃO CRUZADA
-    print("\n🔬 ETAPA 3: Avaliação com Validação Cruzada")
+    print("\n🔬 ETAPA 3: Avaliação com Validação Cruzada (5-fold)")
     print("-" * 50)
     
     evaluator = ModelEvaluator(class_names=data_loader.class_names, cv_folds=5, random_state=42)
     all_results = {}
     
     for name, model in models.items():
-        print(f"\n🧪 Avaliando {name}...")
-        
         try:
-            # Validação cruzada
             cv_results = evaluator.cross_validate_model(model, X, y)
-            
-            # Avaliação completa
-            complete_results = evaluator.evaluate_model_complete(
-                model, X, y, name
-            )
+            complete_results = evaluator.evaluate_model_complete(model, X, y, name)
             
             all_results[name] = {
                 'cv_results': cv_results,
                 'complete_results': complete_results
             }
             
-            print(f"✅ {name} avaliado com sucesso")
-            print(f"   - Acurácia média (CV): {cv_results['accuracy_mean']:.4f} ± {cv_results['accuracy_std']:.4f}")
-            
+            print(f"✅ {name}: {cv_results['accuracy_mean']:.4f} ± {cv_results['accuracy_std']:.4f}")
         except Exception as e:
-            print(f"❌ Erro na avaliação do {name}: {e}")
+            print(f"❌ Erro {name}: {e}")
             continue
     
     # 4. COMPARAÇÃO DE MODELOS
@@ -124,14 +89,8 @@ def main():
     print("-" * 50)
     
     if len(all_results) >= 2:
-        try:
-            # Compara modelos
-            comparison = evaluator.compare_models(models, X, y)
-            
-            print("✅ Comparação realizada com sucesso")
-            
-        except Exception as e:
-            print(f"❌ Erro na comparação: {e}")
+        comparison = evaluator.compare_models(models, X, y)
+        print("✅ Comparação concluída")
     
     # 5. ANÁLISE DETALHADA DOS RESULTADOS
     print("\n📋 ETAPA 5: Análise Detalhada dos Resultados")

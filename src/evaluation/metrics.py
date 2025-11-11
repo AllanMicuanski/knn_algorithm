@@ -147,8 +147,6 @@ class ModelEvaluator:
         Returns:
             Dicionário com avaliação completa
         """
-        print(f"\n🔍 Avaliando {model_name}...")
-        
         # Validação cruzada
         cv_results = self.cross_validate_model(model, X, y, cv=cv)
         
@@ -179,8 +177,6 @@ class ModelEvaluator:
         # Armazena para comparação posterior
         self.results[model_name] = results
         
-        print(f"✅ {model_name} avaliado!")
-        
         return results
     
     def compare_models(self, models: Dict[str, Any], X: np.ndarray, y: np.ndarray, 
@@ -197,8 +193,6 @@ class ModelEvaluator:
         Returns:
             DataFrame com comparação dos modelos
         """
-        print("\n📊 Comparando modelos...")
-        
         comparison_data = []
         
         for name, model in models.items():
@@ -226,8 +220,6 @@ class ModelEvaluator:
         
         # Ordena por F1-Score (métrica mais balanceada)
         comparison_df = comparison_df.sort_values('F1_Score_Mean', ascending=False)
-        
-        print("✅ Comparação concluída!")
         
         return comparison_df
     
@@ -305,6 +297,120 @@ class ModelEvaluator:
         print("="*80)
 
 
+class ConfusionMatrixAnalyzer:
+    """Análise detalhada de matriz de confusão."""
+    
+    def __init__(self, class_names: List[str] = None):
+        self.class_names = class_names
+    
+    def calculate_confusion_matrix(self, y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
+        """Calcula matriz de confusão."""
+        return confusion_matrix(y_true, y_pred)
+    
+    def analyze_confusion_matrix(self, y_true: np.ndarray, y_pred: np.ndarray) -> dict:
+        """Analisa matriz de confusão e retorna insights."""
+        cm = self.calculate_confusion_matrix(y_true, y_pred)
+        n_classes = cm.shape[0]
+        
+        analysis = {
+            'confusion_matrix': cm,
+            'total_samples': cm.sum(),
+            'correct_predictions': np.trace(cm),
+            'accuracy': np.trace(cm) / cm.sum(),
+            'per_class_analysis': {}
+        }
+        
+        for i in range(n_classes):
+            class_name = self.class_names[i] if self.class_names else f"Classe_{i}"
+            tp = cm[i, i]
+            fp = cm[:, i].sum() - tp
+            fn = cm[i, :].sum() - tp
+            tn = cm.sum() - tp - fp - fn
+            
+            precision = tp / (tp + fp) if (tp + fp) > 0 else 0
+            recall = tp / (tp + fn) if (tp + fn) > 0 else 0
+            f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
+            
+            analysis['per_class_analysis'][class_name] = {
+                'true_positives': tp,
+                'false_positives': fp,
+                'false_negatives': fn,
+                'true_negatives': tn,
+                'precision': precision,
+                'recall': recall,
+                'f1_score': f1_score,
+                'support': cm[i, :].sum()
+            }
+        
+        return analysis
+    
+    def print_confusion_matrix_analysis(self, y_true: np.ndarray, y_pred: np.ndarray, 
+                                      model_name: str = "Modelo"):
+        """Imprime análise detalhada da matriz de confusão."""
+        analysis = self.analyze_confusion_matrix(y_true, y_pred)
+        cm = analysis['confusion_matrix']
+        
+        print(f"\n" + "="*70)
+        print(f"🎯 ANÁLISE DA MATRIZ DE CONFUSÃO - {model_name}")
+        print("="*70)
+        
+        print(f"\n📊 MATRIZ DE CONFUSÃO:")
+        if self.class_names:
+            print(f"   {'Verdadeiro \\ Predito':<20}", end="")
+            for name in self.class_names:
+                print(f"{name:>15}", end="")
+            print(f"{'Total':>10}")
+            print("-" * (20 + 15 * len(self.class_names) + 10))
+            
+            for i, name in enumerate(self.class_names):
+                print(f"   {name:<20}", end="")
+                for j in range(len(self.class_names)):
+                    print(f"{cm[i,j]:>15}", end="")
+                print(f"{cm[i,:].sum():>10}")
+            
+            print("-" * (20 + 15 * len(self.class_names) + 10))
+            print(f"   {'Total':<20}", end="")
+            for j in range(len(self.class_names)):
+                print(f"{cm[:,j].sum():>15}", end="")
+            print(f"{cm.sum():>10}")
+        else:
+            print(cm)
+        
+        print(f"\n📈 ESTATÍSTICAS GERAIS:")
+        print(f"   Total de amostras: {analysis['total_samples']}")
+        print(f"   Predições corretas: {analysis['correct_predictions']}")
+        print(f"   Acurácia geral: {analysis['accuracy']:.4f} ({analysis['accuracy']*100:.2f}%)")
+        
+        print(f"\n🔍 ANÁLISE POR CLASSE:")
+        print(f"   {'Classe':<15} {'Precisão':<10} {'Revocação':<10} {'F1-Score':<10} {'Suporte':<10}")
+        print("-" * 60)
+        
+        for class_name, metrics in analysis['per_class_analysis'].items():
+            print(f"   {class_name:<15} "
+                  f"{metrics['precision']:<10.4f} "
+                  f"{metrics['recall']:<10.4f} "
+                  f"{metrics['f1_score']:<10.4f} "
+                  f"{metrics['support']:<10}")
+        
+        print(f"\n⚠️  POSSÍVEIS PROBLEMAS:")
+        has_issues = False
+        for class_name, metrics in analysis['per_class_analysis'].items():
+            issues = []
+            if metrics['precision'] < 0.8:
+                issues.append(f"baixa precisão ({metrics['precision']:.3f})")
+            if metrics['recall'] < 0.8:
+                issues.append(f"baixa revocação ({metrics['recall']:.3f})")
+            
+            if issues:
+                print(f"   - {class_name}: {', '.join(issues)}")
+                has_issues = True
+        
+        if not has_issues:
+            print("   ✅ Nenhum problema significativo detectado!")
+        
+        print("="*70)
+
+
 def quick_evaluate(model, X: np.ndarray, y: np.ndarray, model_name: str = "Model") -> Dict[str, float]:
     """
     Função utilitária para avaliação rápida de um modelo.
@@ -321,41 +427,3 @@ def quick_evaluate(model, X: np.ndarray, y: np.ndarray, model_name: str = "Model
     evaluator = ModelEvaluator()
     results = evaluator.evaluate_model_complete(model, X, y, model_name)
     return results['cross_validation']
-
-
-if __name__ == "__main__":
-    """
-    Teste do módulo de avaliação.
-    """
-    from sklearn.datasets import make_classification
-    from sklearn.ensemble import RandomForestClassifier
-    from sklearn.svm import SVC
-    
-    print("🧪 Testando módulo de avaliação...")
-    
-    # Cria dados sintéticos
-    X, y = make_classification(n_samples=150, n_features=4, n_classes=3, 
-                              n_redundant=0, random_state=42)
-    
-    class_names = ['Classe_A', 'Classe_B', 'Classe_C']
-    
-    # Cria avaliador
-    evaluator = ModelEvaluator(class_names=class_names)
-    
-    # Cria modelos para teste
-    models = {
-        'Random_Forest': RandomForestClassifier(random_state=42),
-        'SVM': SVC(random_state=42)
-    }
-    
-    # Compara modelos
-    comparison = evaluator.compare_models(models, X, y)
-    
-    # Mostra resultados
-    evaluator.print_comparison_summary(comparison)
-    
-    # Mostra detalhes do melhor modelo
-    best_model_name = comparison.iloc[0]['Model']
-    evaluator.print_model_results(best_model_name)
-    
-    print("\n✅ Todos os testes de avaliação passaram!")

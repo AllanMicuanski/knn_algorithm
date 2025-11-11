@@ -81,10 +81,6 @@ class SVMClassifier:
         """
         self.model.fit(X, y)
         self.is_fitted = True
-        
-        print(f"✅ SVM treinado - Kernel: {self.kernel}, C: {self.C}")
-        print(f"   Support vectors: {self.model.n_support_}")
-        
         return self
     
     def predict(self, X: np.ndarray) -> np.ndarray:
@@ -229,50 +225,3 @@ def create_svm_variants() -> Dict[str, SVMClassifier]:
     }
     
     return variants
-
-
-if __name__ == "__main__":
-    """
-    Teste do módulo SVM.
-    """
-    from sklearn.datasets import make_classification
-    from sklearn.model_selection import train_test_split
-    
-    print("🧪 Testando módulo SVM...")
-    
-    # Cria dados sintéticos para teste  
-    X, y = make_classification(n_samples=150, n_features=4, n_classes=3, 
-                              n_redundant=0, random_state=42)
-    
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.3, random_state=42
-    )
-    
-    # Testa SVM básico
-    print("\n🤖 Testando SVM RBF...")
-    svm = SVMClassifier(kernel='rbf')
-    svm.fit(X_train, y_train)
-    
-    predictions = svm.predict(X_test)
-    probabilities = svm.predict_proba(X_test)
-    
-    print(f"Predições: {predictions[:5]}")
-    print(f"Shape das probabilidades: {probabilities.shape}")
-    print(f"Informações do modelo: {svm.get_model_info()}")
-    
-    # Testa diferentes kernels
-    print("\n🔬 Testando diferentes kernels...")
-    kernels = ['linear', 'rbf', 'poly']
-    
-    for kernel in kernels:
-        svm_test = SVMClassifier(kernel=kernel)
-        svm_test.fit(X_train, y_train)
-        accuracy = (svm_test.predict(X_test) == y_test).mean()
-        print(f"  {kernel.upper()}: {accuracy:.3f} de acurácia")
-    
-    # Testa criação de variantes
-    print("\n🏭 Testando variantes de SVM...")
-    variants = create_svm_variants()
-    print(f"Variantes criadas: {list(variants.keys())}")
-    
-    print("\n✅ Todos os testes do SVM passaram!")
