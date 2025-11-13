@@ -1,4 +1,4 @@
-find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null; echo "✅ __pycache__ removidos!""""
+""""
 Módulo KNN (K-Nearest Neighbors)
 =================================
 Implementação própria do algoritmo KNN.
