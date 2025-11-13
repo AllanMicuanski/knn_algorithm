@@ -1,30 +1,7 @@
 # Dependências do Projeto KNN e SVM - NP2
 # =====================================
-# 
-# Este arquivo contém todas as bibliotecas necessárias para executar
-# o projeto de classificação do dataset Iris usando KNN e SVM.
-#
-# Para instalar as dependências:
-# pip install -r requirements.txt
-#
-# Ou usando o ambiente virtual:
-# .venv/bin/pip install -r requirements.txt
 
-# Bibliotecas principais para Machine Learning
+# Bibliotecas principais
 numpy>=1.24.0
 pandas>=1.5.0
 scikit-learn>=1.3.0
-
-# Bibliotecas para visualização (opcionais)
-matplotlib>=3.6.0
-seaborn>=0.12.0
-
-# Biblioteca para métricas avançadas
-scipy>=1.9.0
-
-# Dependências para desenvolvimento e testes (opcionais)
-pytest>=7.0.0
-jupyterlab>=3.6.0
-
-# Dependências para análise de dados (opcionais)
-statsmodels>=0.14.0
